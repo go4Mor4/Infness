@@ -1,5 +1,5 @@
 # INFONESS
-#### *Business Information*
+### *Business Information*
 ---
 ###  Idéia:
 > Criar uma aplicação que seja capaz de retornar para o usuário `indformações` sobre estabelecimentos em uma `determinada região`.
