@@ -1,4 +1,3 @@
-# Imports
 import googlemaps
 import argparse
 from time import sleep, time
@@ -24,7 +23,10 @@ __TITLE = '''
 __KEY = args.key
 __SLEEP_TIME_1 = 0.001
 __SLEEP_TIME_2 = 0.3
-__REQUIERED_TYPE = False
+__REQUIRED_TYPE = False
+__REQUIRED_RADIUS = True
+
+__Bad_Types = ['locality']
 __Place_Types = ['establishment', 'department_store', 'accounting', '[more]', 'airport', 'amusement_park', 'aquarium', 'art_gallery', 'atm', 'bakery', 'bank', 'bar', 'beauty_salon', 'bicycle_store', 'book_store', 'bowling_alley', 'bus_station', 'cafe', 'campground', 'car_dealer', 'car_rental', 'car_repair', 'car_wash', 'casino', 'cemetery', 'church', 'city_hall', 'clothing_store', 'convenience_store', 'courthouse', 'dentist', 'doctor', 'drugstore', 'electrician', 'electronics_store', 'embassy', 'fire_station', 'florist', 'funeral_home', 'furniture_store', 'gas_station', 'gym', 'hair_care', 'hardware_store', 'hindu_temple', 'home_goods_store', 'hospital', 'insurance_agency', 'jewelry_store', 'laundry', 'lawyer', 'library', 'light_rail_station', 'liquor_store', 'local_government_office', 'locksmith', 'lodging', 'meal_delivery', 'meal_takeaway', 'mosque', 'movie_rental', 'movie_theater', 'moving_company', 'museum', 'night_club', 'painter', 'park', 'parking', 'pet_store', 'pharmacy', 'physiotherapist', 'plumber', 'police', 'post_office', 'primary_school', 'real_estate_agency', 'restaurant', 'roofing_contractor', 'rv_park', 'school', 'secondary_school', 'shoe_store', 'shopping_mall', 'spa', 'stadium', 'storage', 'store', 'subway_station', 'supermarket', 'synagogue', 'taxi_stand', 'tourist_attraction', 'train_station', 'transit_station', 'travel_agency', 'university', 'veterinary_care', 'zoo']
 __Additional_Types = ['administrative_area_level_1', 'administrative_area_level_2', 'administrative_area_level_3', 'administrative_area_level_4', 'administrative_area_level_5', 'archipelago', 'colloquial_area', 'continent', 'country', 'finance', 'floor', 'food', 'general_contractor', 'geocode', 'health', 'intersection', 'locality', 'natural_feature', 'neighborhood', 'place_of_worship', 'plus_code', 'point_of_interest', 'political', 'post_box', 'postal_code', 'postal_code_prefix', 'postal_code_suffix', 'postal_town', 'premise', 'room', 'route', 'street_address', 'street_number', 'sublocality', 'sublocality_level_1', 'sublocality_level_2', 'sublocality_level_3', 'sublocality_level_4', 'sublocality_level_5', 'subpremise', 'town_square']
 __OVER = '''
@@ -60,7 +62,15 @@ def animate():
         sys.stdout.write(f'\r[loading {c}]')
         sys.stdout.flush()
         sleep(0.1)
-    sys.stdout.write('\rDone!        ')
+    sys.stdout.write('\r[Done!      ]')
+
+
+def common_items(x, y):
+   common = 0
+   for value in x:
+      if value in y: common = 1
+   if not common: return False
+   else: return True
 
 
 def get_key():
@@ -72,23 +82,23 @@ def get_key():
 
 
 def get_address(gmaps):
-    addres = input('\nProvide an address\n >> ')
+    address = input('\nProvide an address\n >> ')
     t = threading.Thread(target=animate)
     t.start()
-    place_data = gmaps.geocode(addres)
+    place_data = gmaps.geocode(address)
     global done
     done = True
     sleep(1)
     if place_data:
         question = False
-        formatted_address = place_data[0].get('formatted_address')
+        print(f'\n\n That is the correct address ?\n -> {place_data[0].get("formatted_address")}\n\n1  -  YES\n0  -  NO\n')
         while question != 1:
-            try: question = int(input(f'\n\n That is the correct address ?\n -> {formatted_address}\n\n1  -  YES\n0  -  NO\n\n >> '))
+            try: question = int(input(' >> '))
             except Exception: 
                 print('\n[ANSWER ONLY WITH "1" OR "0"!]', end='')
                 continue
             else:
-                if question == 1: return formatted_address, place_data[0].get('geometry').get('location').get('lat'), place_data[0].get('geometry').get('location').get('lng') 
+                if question == 1: return place_data[0].get('geometry').get('location').get('lat'), place_data[0].get('geometry').get('location').get('lng')
                 elif not question: return get_address(gmaps)
                 else: print('\n[ANSWER ONLY WITH "1" OR "0"!]', end='')
     else:
@@ -96,26 +106,37 @@ def get_address(gmaps):
         return get_address(gmaps)
 
 
-def get_radius():
-    options, values = ['1 KM', '3 KM', '5 KM', '10 KM', '20 KM', '30 KM', '40 KM', '50 KM'], [1000, 3000, 5000, 10000, 20000, 30000, 40000, 50000]
-    print('\n==============================\nGET RADIUS:\n')
-    for n in options: 
-        print(f'{options.index(n)}   -   {n}')
-        sleep(__SLEEP_TIME_2)
-    radius_choice = -1
-    while radius_choice not in list(range(len(options))):
-        try: radius_choice = int(input('\nWrite the number corresponding to the radius you want\n\n >> '))
-        except Exception: print('[WRITE A NUMBER BETWEEN "1" AND "8"]')
-        else:
-            if radius_choice in list(range(1, 8)): 
-                print(f'\n[SELECTED OPTION: { options[radius_choice]}]')
-                sleep(__SLEEP_TIME_2)
-                return values[radius_choice]
-            else: print('\n[WRITE A NUMBER BETWEEN "1" AND "8"]')
-                
+def get_radius(required):
+    if required:
+        options, values = ['1 KM', '3 KM', '5 KM', '10 KM', '20 KM', '30 KM', '40 KM', '50 KM'], [1000, 3000, 5000, 10000, 20000, 30000, 40000, 50000]
+        print('\n==============================\nGET RADIUS:\n')
+        for n in options:
+            print(f'{options.index(n)}   -   {n}')
+            sleep(__SLEEP_TIME_2)
+        radius_choice = -1
+        print('\nWrite the number corresponding to the radius you want\n')
+        while radius_choice not in list(range(len(options))):
+            try: radius_choice = int(input(' >> '))
+            except Exception: print('[WRITE A NUMBER BETWEEN "1" AND "8"]')
+            else:
+                if radius_choice in list(range(1, 8)):
+                    print(f'\n[SELECTED OPTION: { options[radius_choice]}]')
+                    sleep(__SLEEP_TIME_2)
+                    return values[radius_choice]
+                else: print('\n[WRITE A NUMBER BETWEEN "1" AND "8"]')
+    else:
+        question = False
+        while question != 1:
+            try: question = int(input('\nDo you want to add a RADIUS ?\n\n1  -  YES\n0  -  NO\n\n >> '))
+            except Exception: print('\n[ANSWER ONLY WITH "1" OR "0"!]', end='')
+            else:
+                if question == 1: return get_type(True)
+                elif not question: return False
+                else: print('\n[ANSWER ONLY WITH "1" OR "0"!]', end='')
 
-def get_type(requiered):
-    if requiered:
+
+def get_type(required):
+    if required:
         print('\n==============================\nGET TYPE:\n\n Choice ONLY one and TYPE:\n')
         for n in __Place_Types[:4]:
             print(f' -> {__Place_Types.index(n)}   -   {n} <-')
@@ -149,7 +170,14 @@ def get_type(requiered):
                 if question == 1: return get_type(True)
                 elif not question: return False
                 else: print('\n[ANSWER ONLY WITH "1" OR "0"!]', end='')   
-    
+
+
+def cleaner(data):
+    new_data = []
+    for result in data.get('results'):
+        if not common_items(result.get('types'), __Bad_Types): new_data.append(result)
+    #continue here
+
 
 def app():
     stats = get_key()
@@ -159,20 +187,27 @@ def app():
             sys.stderr.write(line)
             sleep(__SLEEP_TIME_1)
         gmaps = stats[2]
-        address, lat, lng = get_address(gmaps)
-        radius = get_radius()
-        type_ = get_type(__REQUIERED_TYPE)
+        lat, lng = get_address(gmaps)
+        radius = get_radius(__REQUIRED_RADIUS)
+        type_ = get_type(__REQUIRED_TYPE)
         if not type_: print('\nNo type filter selected ;-;')
-
-        # locations = gmaps.places_nearby(location= (lat, lng), radius = radius)
+        else:
+            try: locations = gmaps.places_nearby(location=(lat, lng), radius=radius)
+            except Exception: return [False, 'FAIL IN "PLACES_NEARBY" FUNCTION EXECUTION']
+            else:
+                cleared_data = cleaner(locations)
     else: print(__OVER)
 
 
 start = time()
 
-if __name__ == "__main__": app()
+if __name__ == "__main__":
+    print(app())
+    # f = open("result_1.txt", "w")
+    # f.write(str(result))
+    # f.close()
 
 end = time()
-print(end - start)
 
+print(f'\n  ~ PROCESS TIME - {end - start} SECONDS')
 
