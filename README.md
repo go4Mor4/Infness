@@ -1,4 +1,4 @@
-# INFONESS
+# INFNESS
 ### *Business Information*
 ---
 ###  Idéia:
