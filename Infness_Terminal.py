@@ -186,18 +186,24 @@ def get_type(required):
 
 
 def cleaner(data):
+    file1 = open("logs.txt", "a")  # append mode
+
+
     new_data, nomes, enderecos, tags, aberto_agora, ratings, ceps, telefones, website = [], [], [], [], [], [], [], [], []
 
     next_page_token = data.get('next_page_token')
 
     while True:
+        file1.write(str(data)+'\n')
         for result in data.get('results'):
             if not common_items(result.get('types'), __Bad_Types): new_data.append(result)
         if not next_page_token: break
         sleep(__SLEEP_TIME_3)
         data = gmaps.places_nearby(page_token=str(next_page_token))
+
         next_page_token = data.get('next_page_token', False)
 
+    file1.close()
 
     for i in new_data:
         nomes.append(i.get('name', 'NA'))
@@ -219,7 +225,7 @@ def cleaner(data):
 
 
 def format_output(df):
-    writer = pd.ExcelWriter("output4.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("output1.xlsx", engine='xlsxwriter')
     df.to_excel(writer, sheet_name='Dados Coletados', index=False)
 
     workbook = writer.book
